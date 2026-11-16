@@ -12,7 +12,13 @@ body {
     overflow: hidden;
     background: #211f1f;
 }
-
+.footer p {
+    color: #fff;
+    font-size: 12px;
+    text-align: center;
+    margin: 0;
+    padding: 10px;
+}
 body {
     font-family: 'Space Grotesk', Arial, sans-serif;
 }
