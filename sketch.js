@@ -169,7 +169,7 @@ function drawKey(k, filled) {
 }
 
 function draw() {
-    background('#232021');
+    background('#171617');
     const { scaleFactor, offsetX, offsetY } = getScale();
     const hoveredKey = keyAtPointer();
 
