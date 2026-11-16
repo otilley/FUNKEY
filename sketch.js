@@ -8,18 +8,17 @@ const ASSET_PATHS = [
 
 const tileSize = 80;
 const keySpacing = 90;
-const DESIGN_W = 630;
-const DESIGN_H = 945;
-const columnBottom = 920;
+const DESIGN_W = 1200;
+const DESIGN_H = 630;
 
 
-const keyboardColumns = [
-    { letters: 'QWERTYUIOP', x: 40,  offset: 0 },
-    { letters: 'ASDFGHJKL',  x: 135, offset: 0.5 },
-    { letters: 'ZXCVBNM',    x: 230, offset: 1.2 }
+const keyboardRows = [
+    { letters: 'QWERTYUIOP', x: 155, y: 180 },
+    { letters: 'ASDFGHJKL',  x: 200, y: 270 },
+    { letters: 'ZXCVBNM',    x: 263, y: 360 }
 ];
 
-const inputBox = { x: 320, y: 335, w: 300, h: 60 };
+const inputBox = { x: 450, y: 70, w: 300, h: 60 };
 
 const keys = [];
 let inputEl;
@@ -27,6 +26,8 @@ let pressedLetter = null;
 let ready = false;
 let failedPaths = [];
 let logoImage;
+let keySynth;
+
 
 
 function loadSvg(fileName, onDone) {
@@ -55,12 +56,12 @@ function requestRedraw() {
     if (ready) redraw();
 }
 
-keyboardColumns.forEach(({ letters, x, offset }) => {
+keyboardRows.forEach(({ letters, x, y }) => {
     [...letters].forEach((letter, index) => {
         keys.push({
             letter,
-            x,
-            y: columnBottom - tileSize - offset * keySpacing - index * keySpacing,
+            x: x + index * keySpacing,
+            y,
             outline: loadSvg(`${letter}_SVG.svg`, requestRedraw),
             fill: loadSvg(`${letter}_FILL.svg`, requestRedraw)
         });
@@ -73,8 +74,12 @@ logoImage = loadSvg('FUNKEYLOGO.svg', requestRedraw);
 function setup() {
     const canvas = createCanvas(windowWidth, windowHeight);
     canvas.parent('p5-container');
+    keySynth = new Tone.Synth({
+        oscillator: { type: 'triangle' },
+        envelope: { attack: 0.005, decay: 0.1, sustain: 0, release: 0.08 }
+    }).toDestination();
     canvas.elt.setAttribute('role', 'img');
-    canvas.elt.setAttribute('aria-label', 'FUNKEY keyboard. Hover over a letter to fill it, click or type to enter letters.');
+   
     canvas.elt.addEventListener('mouseleave', () => {
         cursor(ARROW);
         redraw();
@@ -85,12 +90,12 @@ function setup() {
     inputEl = createInput('');
     inputEl.parent('p5-container');
     inputEl.attribute('placeholder', 'Type here...');
-    inputEl.attribute('maxlength', '20');
+    inputEl.attribute('maxlength', '50');
     inputEl.attribute('aria-label', 'What makes you FUNKEY?');
     inputEl.style('position', 'absolute');
     inputEl.style('box-sizing', 'border-box');
     inputEl.style('background', 'transparent');
-    inputEl.style('color', '#d4e060');
+    inputEl.style('color', '#B6D43C');
     inputEl.style('border', 'none');
     inputEl.style('border-radius', '0');
     inputEl.style('outline', 'none');
@@ -98,6 +103,7 @@ function setup() {
     inputEl.style('text-align', 'center');
     inputEl.style('padding', '0 14px');
     inputEl.style('text-transform', 'uppercase');
+    inputEl.elt.addEventListener('input', layoutInput);
     layoutInput();
 
     ready = true;
@@ -115,8 +121,14 @@ function getScale() {
 
 function layoutInput() {
     const { scaleFactor, offsetX, offsetY } = getScale();
-    inputEl.position(offsetX + inputBox.x * scaleFactor, offsetY + inputBox.y * scaleFactor);
-    inputEl.size(inputBox.w * scaleFactor, inputBox.h * scaleFactor);
+    push();
+    textSize(34);
+    const textWidthNeeded = textWidth(inputEl.value().toUpperCase()) + 28;
+    pop();
+    const inputWidth = min(DESIGN_W, max(inputBox.w, textWidthNeeded));
+    const inputX = DESIGN_W / 2 - inputWidth / 2;
+    inputEl.position(offsetX + inputX * scaleFactor, offsetY + inputBox.y * scaleFactor);
+    inputEl.size(inputWidth * scaleFactor, inputBox.h * scaleFactor);
     inputEl.style('font-size', `${34 * scaleFactor}px`);
 }
 
@@ -135,17 +147,21 @@ function drawKey(k, filled) {
     const img = filled ? k.fill : k.outline;
 
     if (img.complete && !img.failed) {
-        drawingContext.drawImage(img, k.x, k.y, tileSize, tileSize);
+        drawingContext.save();
+        drawingContext.translate(k.x + tileSize / 2, k.y + tileSize / 2);
+        drawingContext.rotate(HALF_PI);
+        drawingContext.drawImage(img, -tileSize / 2, -tileSize / 2, tileSize, tileSize);
+        drawingContext.restore();
         return;
     }
 
     
-    stroke('#d4e060');
+    stroke('#B6D43C');
     strokeWeight(2);
-    if (filled) fill('#d4e060'); else noFill();
+    if (filled) fill('#B6D43C'); else noFill();
     rect(k.x, k.y, tileSize, tileSize, 14);
     noStroke();
-    fill(filled ? '#211f1f' : '#d4e060');
+    fill(filled ? '#232021' : '#B6D43C');
     textStyle(BOLD);
     textSize(32);
     textAlign(CENTER, CENTER);
@@ -153,7 +169,7 @@ function drawKey(k, filled) {
 }
 
 function draw() {
-    background('#211f1f');
+    background('#232021');
     const { scaleFactor, offsetX, offsetY } = getScale();
     const hoveredKey = keyAtPointer();
 
@@ -166,26 +182,35 @@ function draw() {
     });
 
     noStroke();
-    fill('#d4e060');
+    fill('#B6D43C');
     textStyle(NORMAL);
     textSize(16);
     textAlign(CENTER, CENTER);
-    text('What makes you FUNKEY?', 470, 284);
+    text('What makes you FUNKEY?', 600, 43);
 
     if (logoImage.complete && !logoImage.failed) {
-        drawingContext.drawImage(logoImage, 478, 851, 114, 31);
+        drawingContext.drawImage(logoImage, 155, 560, 114, 31);
     }
     pop();
 }
 
 function typeLetter(letter) {
     inputEl.value(inputEl.value() + letter);
+    layoutInput();
 }
 
 
 function flashKey(letter) {
     pressedLetter = letter;
     redraw();
+}
+
+function playKeySound(letter) {
+    const notes = ['C4', 'D4', 'E4', 'G4', 'A4'];
+    const keyIndex = keys.findIndex((k) => k.letter === letter);
+    Tone.start().then(() => {
+        keySynth.triggerAttackRelease(notes[keyIndex % notes.length], '16n');
+    });
 }
 
 
@@ -199,6 +224,7 @@ function mousePressed() {
     if (k) {
         typeLetter(k.letter);
         flashKey(k.letter);
+        playKeySound(k.letter);
     }
 }
 
@@ -218,6 +244,7 @@ function keyPressed() {
 
     if (/^[A-Z]$/.test(letter) && keys.some(k => k.letter === letter)) {
         flashKey(letter);
+        playKeySound(letter);
         if (!inputFocused) {
             typeLetter(letter);
             return false;
