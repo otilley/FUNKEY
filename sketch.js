@@ -10,22 +10,22 @@ const tileSize = 80;
 const keySpacing = 90;
 const DESIGN_W = 1200;
 const DESIGN_H = 630;
+const CHARACTER_LIMIT = 30;
 
 
 const keyboardRows = [
-    { letters: 'QWERTYUIOP', x: 155, y: 180 },
-    { letters: 'ASDFGHJKL',  x: 200, y: 270 },
-    { letters: 'ZXCVBNM',    x: 263, y: 360 }
+    { letters: 'QWERTYUIOP', x: 155, y: 330 },
+    { letters: 'ASDFGHJKL',  x: 200, y: 420 },
+    { letters: 'ZXCVBNM',    x: 263, y: 510 }
 ];
 
-const inputBox = { x: 450, y: 70, w: 300, h: 60 };
+const inputBox = { x: 380, y: 120, w: 440, h: 220 };
 
 const keys = [];
 let inputEl;
 let pressedLetter = null;
 let ready = false;
 let failedPaths = [];
-let logoImage;
 let keySynth;
 
 
@@ -68,9 +68,6 @@ keyboardRows.forEach(({ letters, x, y }) => {
     });
 });
 
-logoImage = loadSvg('FUNKEYLOGO.svg', requestRedraw);
-
-
 function setup() {
     const canvas = createCanvas(windowWidth, windowHeight);
     canvas.parent('p5-container');
@@ -87,10 +84,12 @@ function setup() {
 
     textFont('Space Grotesk');
 
-    inputEl = createInput('');
+    inputEl = createElement('textarea');
     inputEl.parent('p5-container');
     inputEl.attribute('placeholder', 'Type here...');
-    inputEl.attribute('maxlength', '50');
+    inputEl.attribute('rows', '3');
+    inputEl.attribute('wrap', 'soft');
+    inputEl.attribute('maxlength', String(CHARACTER_LIMIT));
     inputEl.attribute('aria-label', 'What makes you FUNKEY?');
     inputEl.style('position', 'absolute');
     inputEl.style('box-sizing', 'border-box');
@@ -101,9 +100,10 @@ function setup() {
     inputEl.style('outline', 'none');
     inputEl.style('font-family', 'Space Grotesk, sans-serif');
     inputEl.style('text-align', 'center');
-    inputEl.style('padding', '0 14px');
+    inputEl.style('padding', '8px 14px');
+    inputEl.style('line-height', '1.2');
     inputEl.style('text-transform', 'uppercase');
-    inputEl.elt.addEventListener('input', layoutInput);
+    inputEl.style('resize', 'none');
     layoutInput();
 
     ready = true;
@@ -121,14 +121,8 @@ function getScale() {
 
 function layoutInput() {
     const { scaleFactor, offsetX, offsetY } = getScale();
-    push();
-    textSize(34);
-    const textWidthNeeded = textWidth(inputEl.value().toUpperCase()) + 28;
-    pop();
-    const inputWidth = min(DESIGN_W, max(inputBox.w, textWidthNeeded));
-    const inputX = DESIGN_W / 2 - inputWidth / 2;
-    inputEl.position(offsetX + inputX * scaleFactor, offsetY + inputBox.y * scaleFactor);
-    inputEl.size(inputWidth * scaleFactor, inputBox.h * scaleFactor);
+    inputEl.position(offsetX + inputBox.x * scaleFactor, offsetY + inputBox.y * scaleFactor);
+    inputEl.size(inputBox.w * scaleFactor, inputBox.h * scaleFactor);
     inputEl.style('font-size', `${34 * scaleFactor}px`);
 }
 
@@ -183,20 +177,18 @@ function draw() {
 
     noStroke();
     fill('#B6D43C');
-    textStyle(NORMAL);
-    textSize(16);
+    textStyle(ITALIC);
+    textSize(25);
     textAlign(CENTER, CENTER);
     text('What makes you FUNKEY?', 600, 43);
+    
 
-    if (logoImage.complete && !logoImage.failed) {
-        drawingContext.drawImage(logoImage, 155, 560, 114, 31);
-    }
     pop();
 }
 
 function typeLetter(letter) {
+    if (inputEl.value().length >= CHARACTER_LIMIT) return;
     inputEl.value(inputEl.value() + letter);
-    layoutInput();
 }
 
 
