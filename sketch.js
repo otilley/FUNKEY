@@ -27,6 +27,7 @@ let pressedLetter = null;
 let ready = false;
 let failedPaths = [];
 let keySynth;
+let funkeyLogo;
 
 
 
@@ -67,6 +68,8 @@ keyboardRows.forEach(({ letters, x, y }) => {
         });
     });
 });
+
+funkeyLogo = loadSvg('FUNKEYLOGO.svg', requestRedraw);
 
 function setup() {
     const canvas = createCanvas(windowWidth, windowHeight);
@@ -177,10 +180,30 @@ function draw() {
 
     noStroke();
     fill('#B6D43C');
-    textStyle(ITALIC);
-    textSize(25);
+    textStyle(NORMAL);
+    const headingFontSize = 18;
+    textSize(headingFontSize);
     textAlign(CENTER, CENTER);
-    text('What makes you FUNKEY?', 600, 43);
+    const headingPrefix = 'What makes you ';
+    const headingSuffix = '?';
+    const logoWidth = textWidth('FUNKEY') * 1.5;
+    const logoHeight = logoWidth / (149.76 / 40.39);
+    const logoQuestionGap = 5;
+    const prefixWidth = textWidth(headingPrefix);
+    const suffixWidth = textWidth(headingSuffix);
+    const headingWidth = prefixWidth + logoWidth + logoQuestionGap + suffixWidth;
+    const headingX = 600 - headingWidth / 2;
+
+    textAlign(LEFT, CENTER);
+    text(headingPrefix, headingX, 43);
+    if (funkeyLogo.complete && !funkeyLogo.failed) {
+        drawingContext.drawImage(funkeyLogo, headingX + prefixWidth, 43 - logoHeight / 2, logoWidth, logoHeight);
+    } else {
+        textSize(headingFontSize * 2);
+        text('FUNKEY', headingX + prefixWidth, 43);
+        textSize(headingFontSize);
+    }
+    text(headingSuffix, headingX + prefixWidth + logoWidth + logoQuestionGap, 43);
     
 
     pop();
